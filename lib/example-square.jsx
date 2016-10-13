@@ -11,7 +11,6 @@ export default React.createClass({
     getInitialState() {
         return {};
     },
-
     /**
      * This must return a JSX element.
      * @returns {XML}
@@ -25,9 +24,13 @@ export default React.createClass({
             height: this.props.size,
             backgroundColor: this.props.color
         };
+
         //To set a div's class in React you must use the 'className' attribute, instead of the
         //usual 'class' attribute. This is because 'class' is a reserved keyword in ECMAScript 6.
-        return <div className='square' ref='square' style={style}/>
+        
+        return <div className='square' ref='square' style={style}>
+                    <span className='arrow'>{this.props.arrow}</span>
+                </div>
     },
 
     /**
