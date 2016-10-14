@@ -9,9 +9,9 @@ export default React.createClass({
             initialPos: [],
             startPos: [],
             trackingArrow: '',
-            detectCycle: false,
             slowerPos: [],
-            fasterPos: []
+            fasterPos: [],
+            detectCycle: false
         };
     },
 
@@ -85,6 +85,9 @@ export default React.createClass({
 
         if(nextProps.reset){
             this.state.initialPos = this.state.startPos.slice(0);
+            this.state.slowerPos = this.state.startPos.slice(0);
+            this.state.fasterPos = this.state.startPos.slice(0);
+            this.state.detectCycle = false;
             this.state.trackingArrow = this.getNewArrow(this.state.initialPos);
             this.setState(this.state);
         }
@@ -102,14 +105,17 @@ export default React.createClass({
 
                 if(this.state.slowerPos[0] == this.state.fasterPos[0] && this.state.slowerPos[1] == this.state.fasterPos[1]){
                     this.state.detectCycle = true;
+                    this.state.slowerPos = this.state.startPos.slice();
                 }
             }
         }
+        else if(this.state.detectCycle){
+            this.state.slowerPos = this.getNext(this.state.slowerPos);
+            this.state.fasterPos = this.getNext(this.state.fasterPos);
 
-        if(this.state.detectCycle){
-
-            if(this.state.slowerPos[0] == this.state.initialPos[0] && this.state.slowerPos[1] == this.state.initialPos[1]){
+            if(this.state.slowerPos[0] == this.state.fasterPos[0] && this.state.slowerPos[1] == this.state.fasterPos[1]){
                 console.log('Cycle Detected');
+                this.keepMoving();
                 this.props.setModal(true, 'repeat');
                 return;
             }
