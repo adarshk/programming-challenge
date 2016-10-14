@@ -8,10 +8,7 @@ export default React.createClass({
             arrows: [],
             initialPos: [],
             startPos: [],
-            trackingArrow: '',
-            minPos: [],
-            maxPos: [],
-            numSteps: 0
+            trackingArrow: ''
         };
     },
 
@@ -19,7 +16,7 @@ export default React.createClass({
         this.makeArrows();
         this.randomStart();
 
-        this.getNewArrow();
+        this.state.trackingArrow = this.getNewArrow(this.state.initialPos);
     },
 
     randomStart(){
@@ -27,8 +24,6 @@ export default React.createClass({
         let y = Math.floor(Math.random() * this.props.size);
         this.state.initialPos = [x, y];
         this.state.startPos = [x, y];
-        this.state.minPos = [x, y];
-        this.state.maxPos = [x, y];
 
         console.log('startPos', x, y);
     },
@@ -39,16 +34,18 @@ export default React.createClass({
         }
     },
 
-    getNewArrow(){
-        let tArr = (this.state.initialPos[1] * this.props.size) + this.state.initialPos[0];
-        this.state.trackingArrow = this.state.arrows[tArr];
-        console.log('newArrow', this.state.trackingArrow);
+    getNewArrow(pos){
+        let tArr = (pos[1] * this.props.size) + pos[0];
+        let arr = this.state.arrows[tArr];
+        console.log('newArrow', arr);
+        return arr;
     },
 
-    getNext(){
+    getNext(currentPos){
         let posx, posy;
-        [posx, posy] = this.state.initialPos;
-        switch(this.state.trackingArrow){
+        [posx, posy] = currentPos;
+        let arr = this.getNewArrow([posx, posy]);
+        switch(arr){
             case '←':
                 return [posx - 1, posy];
             case '→':
@@ -66,7 +63,7 @@ export default React.createClass({
         return [posx, posy];
     },
 
-    checkNextIfOutside(nextPos){
+    isInside(nextPos){
         if(nextPos[0] >= 0 && nextPos[0] < this.props.size && nextPos[1] >= 0 && nextPos[1] < this.props.size){
             return true;
         }
@@ -83,24 +80,51 @@ export default React.createClass({
 
         if(nextProps.reset){
             this.state.initialPos = this.state.startPos.slice(0);
-            this.state.numSteps = 0;
-            this.getNewArrow();
+            this.state.trackingArrow = this.getNewArrow(this.state.initialPos);
             this.setState(this.state);
         }
 
     },
 
     move(){
-        let newPos = this.getNext();
+
+        let detectCycle = false;
+        let slowerPos = this.state.initialPos.slice();
+        let fasterPos = this.state.initialPos.slice();
+
+        while(!detectCycle && this.isInside(slowerPos) && this.isInside(fasterPos)){
+            slowerPos = this.getNext(slowerPos);
+            fasterPos = this.getNext(fasterPos);
+
+            if(this.isInside(fasterPos)){
+                fasterPos = this.getNext(fasterPos);
+
+                if(slowerPos[0] == fasterPos[0] && slowerPos[1] == fasterPos[1]){
+                    detectCycle = true;
+                }
+            }
+            
+        }
+
+        if(detectCycle){
+
+            if(slowerPos[0] == this.state.initialPos[0] && slowerPos[1] == this.state.initialPos[1]){
+                console.log('Cycle Detected');
+                this.keepMoving();
+                this.props.setModal(true, 'repeat');
+                return;
+            }
+        }
+        
+        this.keepMoving();
+    },
+
+    keepMoving(){
+        let newPos = this.getNext(this.state.initialPos);
         console.log('newPos', newPos);
-        if(this.checkNextIfOutside(newPos)){
-            this.getMinMaxPos(newPos);
+        if(this.isInside(newPos)){
             this.state.initialPos = newPos;    
-            this.getNewArrow();
-
-            this.state.numSteps += 1;
-
-            this.calSteps();
+            this.state.trackingArrow = this.getNewArrow(this.state.initialPos);
 
             this.setState(this.state);
         }
@@ -108,26 +132,6 @@ export default React.createClass({
             console.log('Outside');
             this.props.setModal(true, 'outside');
         }
-    },
-
-    calSteps(){
-        let diffX = (this.state.maxPos[0] + 1) - (this.state.minPos[0]);
-        let diffY = (this.state.maxPos[1] + 1) - (this.state.minPos[1]);
-
-        if(this.state.numSteps > diffX * diffY){
-            console.log('Repeating');
-            this.props.setModal(true, 'repeat');
-        }
-        
-    },
-
-    getMinMaxPos(newPos){
-        this.state.minPos[0] = Math.min(this.state.minPos[0], newPos[0]);
-        this.state.minPos[1] = Math.min(this.state.minPos[1], newPos[1]);
-        this.state.maxPos[0] = Math.max(this.state.maxPos[0], newPos[0]);
-        this.state.maxPos[1] = Math.max(this.state.maxPos[1], newPos[1]);
-
-        console.log('Min and Max', this.state.minPos, this.state.maxPos);
     },
 
     render() {

@@ -16,6 +16,7 @@ export default React.createClass({
             <Button bsStyle="success" onClick={this.onNext}>Next</Button>
             <Button bsStyle="success" onClick={this.onPlay}>Play</Button>
             <Button bsStyle="danger" onClick={this.onStop}>Stop</Button>
+            <Button bsStyle="primary" onClick={this.onShuffle}>Shuffle</Button>
             <Button bsStyle="primary" onClick={this.onReset}>Reset</Button>
             <DropdownButton title="Set Size" onSelect={this.onSelect} id="bg-nested-dropdown">
               <MenuItem eventKey="1">3x3</MenuItem>
@@ -46,6 +47,10 @@ export default React.createClass({
 
     onReset() {
         this.props.control.reset();
+    },
+
+    onShuffle(){
+        this.onSetSize(this.props.size);
     },
 
     onSetSize(newSize) {
