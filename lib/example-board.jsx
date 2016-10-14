@@ -8,7 +8,10 @@ export default React.createClass({
             arrows: [],
             initialPos: [],
             startPos: [],
-            trackingArrow: ''
+            trackingArrow: '',
+            detectCycle: false,
+            slowerPos: [],
+            fasterPos: []
         };
     },
 
@@ -24,6 +27,8 @@ export default React.createClass({
         let y = Math.floor(Math.random() * this.props.size);
         this.state.initialPos = [x, y];
         this.state.startPos = [x, y];
+        this.state.slowerPos = [x, y];
+        this.state.fasterPos = [x, y];
 
         console.log('startPos', x, y);
     },
@@ -88,29 +93,23 @@ export default React.createClass({
 
     move(){
 
-        let detectCycle = false;
-        let slowerPos = this.state.initialPos.slice();
-        let fasterPos = this.state.initialPos.slice();
+        if(!this.state.detectCycle && this.isInside(this.state.slowerPos) && this.isInside(this.state.fasterPos)){
+            this.state.slowerPos = this.getNext(this.state.slowerPos);
+            this.state.fasterPos = this.getNext(this.state.fasterPos);
 
-        while(!detectCycle && this.isInside(slowerPos) && this.isInside(fasterPos)){
-            slowerPos = this.getNext(slowerPos);
-            fasterPos = this.getNext(fasterPos);
+            if(this.isInside(this.state.fasterPos)){
+                this.state.fasterPos = this.getNext(this.state.fasterPos);
 
-            if(this.isInside(fasterPos)){
-                fasterPos = this.getNext(fasterPos);
-
-                if(slowerPos[0] == fasterPos[0] && slowerPos[1] == fasterPos[1]){
-                    detectCycle = true;
+                if(this.state.slowerPos[0] == this.state.fasterPos[0] && this.state.slowerPos[1] == this.state.fasterPos[1]){
+                    this.state.detectCycle = true;
                 }
             }
-            
         }
 
-        if(detectCycle){
+        if(this.state.detectCycle){
 
-            if(slowerPos[0] == this.state.initialPos[0] && slowerPos[1] == this.state.initialPos[1]){
+            if(this.state.slowerPos[0] == this.state.initialPos[0] && this.state.slowerPos[1] == this.state.initialPos[1]){
                 console.log('Cycle Detected');
-                this.keepMoving();
                 this.props.setModal(true, 'repeat');
                 return;
             }
