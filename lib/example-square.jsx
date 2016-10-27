@@ -1,4 +1,6 @@
 import React from 'react';
+import {style} from 'glamor';
+import constants from './constants';
 
 
 //this exports a reference to a React class as the default export
@@ -19,18 +21,42 @@ export default React.createClass({
         //this will set the CSS style of the div we're returning.
         //this.props are injected by the entity that instantiated
         //this react class.
-        let style = {
+
+
+        let rule = style({ 
             width: this.props.size,
             height: this.props.size,
-            backgroundColor: this.props.color
-        };
+            backgroundColor: this.props.color,
+            ':hover': {
+                backgroundColor: this.props.isSelected ? this.props.color : constants.selectedColor
+            }
+        })
 
         //To set a div's class in React you must use the 'className' attribute, instead of the
         //usual 'class' attribute. This is because 'class' is a reserved keyword in ECMAScript 6.
         
-        return <div className='square' ref='square' style={style}>
+        return <div className='square' ref='square' {...rule} onClick={this.onClick} onMouseOver={this.onMouseOver}>
                     <span className='arrow'>{this.props.arrow}</span>
                 </div>
+    },
+
+    onClick(event){
+        if (this.props.type && this.props.type == 'secondary') {
+            this.props.click();
+        }
+        else{
+            this.props.select(this.props.pos);
+        }
+    },
+
+    onMouseOver(event){
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.props.type && this.props.type == 'secondary') {
+            this.props.mouseOver(this.props.pos);
+        }
+
+        return;
     },
 
     /**

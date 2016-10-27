@@ -4,15 +4,42 @@
 }
 
 .checkerboard {
-	margin-left: auto;
-	margin-right: auto;
 	margin-top: 50px;
+}
+
+.checkerboard.left{
+	margin-left: 50px;
+	margin-right: 150px;
+}
+
+.checkerboard.right{
+	margin-left: 150px;
+	margin-right: 50px;
+}
+
+.left{
+	float: left;
+}
+
+.right{
+	float: right;
 }
 
 .square {
     border: 1px solid #777777;
     float: left;
     position: relative;
+}
+
+.square.mini {
+    float: none;
+    position: absolute;
+}
+
+.minimap{
+	left: 600px;
+    top: 400px;
+    position: absolute;
 }
 
 .arrow {
@@ -49,4 +76,32 @@
 
 .modal-open{
 	overflow: scroll;
+}
+
+.fa {
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+.fa:hover {
+	color: #962d2d;
+	cursor: pointer;
+}
+
+.controls{
+	margin-left: 100px;
+	margin-top: 25px;
+}
+
+.options{
+	position: fixed;
+	top: 0;
+	right: 50px;
+	z-index: 10;
+}
+
+.clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
 }

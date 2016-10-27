@@ -1,6 +1,9 @@
 import React from 'react';
-//notice we use the relative path syntax when loading local files
 import Square from './example-square';
+import Minimap from './minimap';
+import constants from './constants';
+import utils from './utils';
+import SecondaryBoard from './secondary-board';
 
 export default React.createClass({
     getInitialState() {
@@ -11,13 +14,16 @@ export default React.createClass({
             trackingArrow: '',
             slowerPos: [],
             fasterPos: [],
-            detectCycle: false
+            detectCycle: false,
+            selected: false,
+            visitedBlocks: [],
+            targetBlock: []
         };
     },
 
     componentWillMount() {
-        this.makeArrows();
-        this.randomStart();
+        this.state.arrows = utils.makeArrows(this.props.size);
+        // this.randomStart();
 
         this.state.trackingArrow = this.getNewArrow(this.state.initialPos);
     },
@@ -31,12 +37,6 @@ export default React.createClass({
         this.state.fasterPos = [x, y];
 
         console.log('startPos', x, y);
-    },
-
-    makeArrows() {
-        for(let i=0; i < this.props.size * this.props.size; i++){
-            this.state.arrows.push('←→↓↑'[Math.floor(Math.random() * 4)]);
-        }
     },
 
     getNewArrow(pos){
@@ -79,6 +79,8 @@ export default React.createClass({
     componentWillReceiveProps(nextProps){
         console.log('nextProps', nextProps);
 
+        if (!this.state.selected) return;
+
         if(nextProps.next || nextProps.play){
             this.move();   
         }
@@ -116,7 +118,7 @@ export default React.createClass({
             if(this.state.slowerPos[0] == this.state.fasterPos[0] && this.state.slowerPos[1] == this.state.fasterPos[1]){
                 console.log('Cycle Detected');
                 this.keepMoving();
-                this.props.setModal(true, 'repeat');
+                // this.props.setModal(true, 'repeat');
                 return;
             }
         }
@@ -128,6 +130,10 @@ export default React.createClass({
         let newPos = this.getNext(this.state.initialPos);
         console.log('newPos', newPos);
         if(this.isInside(newPos)){
+            if (!utils.checkIfInArray(this.state.initialPos, this.state.visitedBlocks)) {
+                this.state.visitedBlocks.push(this.state.initialPos);
+            }
+            
             this.state.initialPos = newPos;    
             this.state.trackingArrow = this.getNewArrow(this.state.initialPos);
 
@@ -139,6 +145,49 @@ export default React.createClass({
         }
     },
 
+    onSelect(selectedPos){
+        if (this.state.selected) return;
+        
+        let x = selectedPos[0];
+        let y = selectedPos[1];
+        this.state.initialPos = [x, y];
+        this.state.startPos = [x, y];
+        this.state.slowerPos = [x, y];
+        this.state.fasterPos = [x, y];
+        this.state.selected = true;
+
+        console.log('startPos', x, y);
+
+
+        let distLeftTop = Math.sqrt(Math.pow((0 - x),2) + Math.pow((0 - y),2));
+        let distRightTop = Math.sqrt(Math.pow((this.props.size-1 - x),2) + Math.pow((0 - y),2));
+        let distLeftBottom = Math.sqrt(Math.pow((0 - x),2) + Math.pow((this.props.size-1 - y),2));
+        let distRightBottom = Math.sqrt(Math.pow((this.props.size-1 - x),2) + Math.pow((this.props.size-1 - y),2));
+
+        let distances  = [distLeftTop, distRightTop, distLeftBottom, distRightBottom];
+        let index = distances.indexOf(Math.max.apply(Math, distances));
+
+        switch(index){
+            case 0:
+                this.state.targetBlock = [0, 0];
+                break;
+            case 1:
+                this.state.targetBlock = [this.props.size-1, 0];
+                break;
+            case 2:
+                this.state.targetBlock = [0, this.props.size-1];
+                break;
+            case 3:
+                this.state.targetBlock = [this.props.size-1, this.props.size-1];
+                break;
+            default:
+                this.state.targetBlock = [0, 0];
+                break;
+        }
+
+        this.setState(this.state);
+    },
+
     render() {
         //this example just creates a row of squares. Use CSS styling to
         //get the checkers into a mxm size board
@@ -148,15 +197,33 @@ export default React.createClass({
         let key = 0;
         for(let i = 0; i < this.props.size; i++) {
             for(let j = 0; j < this.props.size; j++) {
-                let color = key++ % 2 == 0 ? '#BEEB9F' : '#79BD8F';
+                let color = key++ % 2 == 0 ? constants.boardEvenColor : constants.boardOddColor;
                 let arrow = this.state.arrows[key-1];
                 let pos = [j, i];
                 
-                if(j === this.state.initialPos[0] && i === this.state.initialPos[1]){
-                    color = '#FF6138';
+                if(utils.checkIfInArray(pos, this.state.visitedBlocks)){
+                    color = constants.visitedColor;
                 }
 
-                squares.push(<Square key={key} size={this.props.squareSize} color={color} arrow={arrow}/>)
+                if(j === this.state.initialPos[0] && i === this.state.initialPos[1]){
+                    color = constants.selectedColor;
+                }
+
+                if (this.state.targetBlock.length > 0) {
+                    if(j === this.state.targetBlock[0] && i === this.state.targetBlock[1]){
+                        arrow = '{}';
+                    }
+                }
+
+                squares.push(<Square 
+                                key={key} 
+                                size={this.props.squareSize} 
+                                color={color} 
+                                arrow={arrow} 
+                                select={this.onSelect} 
+                                pos={pos}
+                                isSelected={this.state.selected}/>
+                            )
 
             }
         }
@@ -165,8 +232,32 @@ export default React.createClass({
             width: size,
             height: size
         };
-        return <div className="checkerboard" style={style}>
-            {squares}
-        </div>;
+        let boardType = 'checkerboard ' + this.props.type
+        return <div>
+                    <div className={boardType} style={style}>
+                    {squares}
+                    </div>
+
+                    <Minimap positions={this.state.visitedBlocks} size={this.props.squareSize}></Minimap>
+                    <SecondaryBoard
+                       size={this.props.size} 
+                       squareSize={this.props.squareSize} 
+                       type={'right'}
+                       positions={this.state.visitedBlocks}
+                       clearVisited={this.setVisitedBlocks}/>
+                </div>
+    },
+
+    setVisitedBlocks(arrs){
+
+        for(let i=0; i < arrs.length; i++){
+            let updatedArr = arrs[i];
+            let index = this.state.visitedBlocks[i][1] * this.props.size + this.state.visitedBlocks[i][0];
+            this.state.arrows[index] = updatedArr;
+        }
+
+        this.state.visitedBlocks = [];
+        this.state.initialPos = this.state.startPos.slice();
+        this.setState(this.state);
     }
 });

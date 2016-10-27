@@ -2,8 +2,10 @@
 import React from 'react';
 import Board from './example-board';
 import Controls from './example-controls';
+import Options from './options';
 import Event from './event';
 import Sound from 'react-sound';
+// import Spring from 'react-motion';
 
 //get the content DOMElemet create in index.html
 let content = document.getElementById('content');
@@ -34,32 +36,69 @@ let Main = React.createClass({
         this.clearInt();
     },
 
+    /*<Spring defaultValue={0} endValue={50}>
+                {obj => {
+                    let style = {
+                        transform: `translateY(${obj}px)`
+                    }
+                
+                return <div style={style} className="clearfix">
+                    <Board size={this.state.size} 
+                           squareSize={this.state.squareSize} 
+                           next={this.state.next} 
+                           play={this.state.play} 
+                           reset={this.state.reset}
+                           setModal={this.setModal}
+                           type={'left'}/>
+
+                    <Board size={this.state.size} 
+                           squareSize={this.state.squareSize} 
+                           next={this.state.next} 
+                           play={this.state.play} 
+                           reset={this.state.reset}
+                           setModal={this.setModal}
+                           type={'right'}/>
+                </div>
+                }}
+            </Spring>*/
+
     render() {
         
         let moveSound = this.state.next || this.state.play ? Sound.status.PLAYING : Sound.status.STOPPED;
         let eventSound = this.state.showModal ? Sound.status.PLAYING : Sound.status.STOPPED;
 
         return <div key={this.state.key}>
-            <Controls control={this} size={this.state.size}/>
-            <Board size={this.state.size} 
-                   squareSize={this.state.squareSize} 
-                   next={this.state.next} 
-                   play={this.state.play} 
-                   reset={this.state.reset}
-                   setModal={this.setModal}/>
-            
-            <Event close={this.state.showModal} 
-                     reset={this.reset} 
-                     setSize={this.setSize} 
-                     size={this.state.size}
-                     condition={this.state.conditionType}/>
 
-            <Sound
-                url="./assets/move.wav"
-                playStatus={moveSound}/>
-            <Sound
-                url="./assets/event.wav"
-                playStatus={eventSound}/>
+            <Controls control={this} size={this.state.size}/>
+            <Options control={this} size={this.state.size}/>
+                
+            <div className="clearfix">
+                <Board size={this.state.size} 
+                       squareSize={this.state.squareSize} 
+                       next={this.state.next} 
+                       play={this.state.play} 
+                       reset={this.state.reset}
+                       setModal={this.setModal}
+                       type={'left'}/>
+
+            </div>
+
+            <div>
+            
+                <Event close={this.state.showModal} 
+                         reset={this.reset} 
+                         setSize={this.setSize} 
+                         size={this.state.size}
+                         condition={this.state.conditionType}/>
+
+
+                <Sound
+                    url="./assets/move.wav"
+                    playStatus={moveSound}/>
+                <Sound
+                    url="./assets/event.wav"
+                    playStatus={eventSound}/>
+            </div>
             </div>;
     },
 
